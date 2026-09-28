@@ -13,6 +13,7 @@ import { Checkbox } from "@mui/material";
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import GridTagBubbles from "./GridTagBubbles";
+import { cssVar } from "@voxel51/voodo";
 
 type GridCustomRendererItemConfig = {
   pluginName: string;
@@ -103,7 +104,7 @@ const SELECT_SAMPLE_BUTTON_STYLES: React.CSSProperties = {
   position: "absolute",
   top: 0,
   left: 0,
-  color: "hsl(25, 100%, 51%)",
+  color: cssVar.color.brand.primary,
   cursor: "pointer",
   zIndex: 20,
 };

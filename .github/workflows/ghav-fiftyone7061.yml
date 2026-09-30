@@ -1,0 +1,64 @@
+name: GHAV FiftyOne 7061 human
+
+on:
+  push:
+    branches:
+      - codex/ghav-fiftyone7061-human
+
+permissions:
+  contents: read
+
+jobs:
+  modified-files:
+    runs-on: ubuntu-24.04
+    outputs:
+      app-changes: ${{ steps.filter.outputs.app }}
+      e2e-changes: ${{ steps.filter.outputs.e2e-pw }}
+      fiftyone-changes: ${{ steps.filter.outputs.fiftyone }}
+    steps:
+      - name: Checkout pinned Before source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: fff48b8f63e4799253ec5261a43b361fb43d349d
+          sparse-checkout: |
+            /*
+            !/docs/**
+          sparse-checkout-cone-mode: false
+      - name: Filter fixed source diff
+        uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
+        id: filter
+        with:
+          base: ab2353e6a4c69e9998697297238dd1b4ad6fd52a
+          ref: fff48b8f63e4799253ec5261a43b361fb43d349d
+          filters: |
+            app:
+              - 'app/**'
+              - '.github/workflows/build.yml'
+            e2e-pw:
+              - 'e2e-pw/**'
+              - '.github/workflows/e2e.yml'
+            fiftyone:
+              - 'fiftyone/**'
+              - 'package/**'
+              - 'requirements/**'
+              - 'tests/**'
+              - 'requirements.txt'
+              - 'setup.py'
+              - '.github/workflows/build.yml'
+              - '.github/workflows/test.yml'
+              - 'plugins/**'
+      - name: Record core result
+        env:
+          APP: ${{ steps.filter.outputs.app }}
+          E2E: ${{ steps.filter.outputs.e2e-pw }}
+          FIFTYONE: ${{ steps.filter.outputs.fiftyone }}
+        run: |
+          echo "GHAV_ARM=human"
+          echo "GHAV_SOURCE_SHA=$(git rev-parse HEAD)"
+          echo "GHAV_SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+          echo "GHAV_APP=$APP"
+          echo "GHAV_E2E=$E2E"
+          echo "GHAV_FIFTYONE=$FIFTYONE"
+          if test -d docs; then echo 'GHAV_DOCS_PRESENT=true'; else echo 'GHAV_DOCS_PRESENT=false'; fi
+          test "$(git rev-parse HEAD)" = 'fff48b8f63e4799253ec5261a43b361fb43d349d'
+          test "$APP,$E2E,$FIFTYONE" = 'true,false,false'

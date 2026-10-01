@@ -1,0 +1,47 @@
+name: GHAV FiftyOne 7061 test-app ours
+
+on:
+  push:
+    branches:
+      - codex/ghav-fiftyone7061-testapp-ours
+
+permissions:
+  contents: read
+
+jobs:
+  test-app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout pinned Before source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: fff48b8f63e4799253ec5261a43b361fb43d349d
+      - name: Verify fixed source and record worktree boundary
+        run: |
+          test "$(git rev-parse HEAD)" = 'fff48b8f63e4799253ec5261a43b361fb43d349d'
+          test "$(git rev-parse HEAD^{tree})" = '06914a25afd093fc3d79225bbf67bd88739dfb90'
+          echo "GHAV_SOURCE_SHA=$(git rev-parse HEAD)"
+          echo "GHAV_SOURCE_TREE=$(git rev-parse HEAD^{tree})"
+          if test -d docs; then echo GHAV_DOCS_PRESENT=true; else echo GHAV_DOCS_PRESENT=false; fi
+      - name: Setup node 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Enable corepack
+        run: corepack enable
+      - name: Prepare yarn 4
+        run: corepack prepare yarn@4.9.1 --activate
+      - name: Cache
+        id: node-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            app/node_modules
+            app/.yarn/cache
+          key: ghav7061-testapp-node-modules-${{ hashFiles('app/yarn.lock') }}
+      - name: Install
+        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: cd app && yarn install
+      - name: Run full app test suite
+        run: cd app && yarn test
